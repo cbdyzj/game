@@ -1,79 +1,178 @@
 package org.jianzhao.game.window;
 
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.util.TypeUtils;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
-import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
-
+/**
+ * 屏保
+ */
+@Slf4j
 public class Screensaver {
 
+    public static final int DEFAULT_WIDTH = 400;
+    public static final int DEFAULT_HEIGHT = 300;
+
+    public static final int INTERVAL = 25;
+
+    private boolean closed = false;
+
     private JFrame window;
-    private JTextField inputN;
+    private ScreensaverCanvas canvas;
 
-    private Canvas canvas;
-    int n = 10;
-    int[] x = new int[n];
-    int[] y = new int[n];
-
-    public Screensaver() {
-        this.initGui();
-    }
-
-    private void initGui() {
+    private void createGui() {
         this.window = new JFrame();
-        this.inputN = new JTextField(6);
-        this.canvas = new Canvas() {
-            @Override
-            public void paint(Graphics g) {
-                Screensaver.this.paint(g);
-            }
-        };
-        this.window.setSize(400, 300);
-        this.window.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.window.setLayout(new FlowLayout());
-        this.window.add(new Label("请输入变数:"));
-        this.window.add(this.inputN);
-        var button = new JButton("确定");
-        button.addActionListener(this::onClick);
-        this.window.add(button);
+        this.window.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        this.window.setLocationRelativeTo(null);
+        this.window.addWindowListener(this.onClose());
+        this.canvas = new ScreensaverCanvas();
         this.window.add(this.canvas);
     }
 
-    public void onClick(ActionEvent ev) {
-        int N = Integer.parseInt(this.inputN.getText());
-        int[] x = new int[N];
-        int[] y = new int[N];
-        for (int i = 0; i < N; i++) {
-            x[i] = (int) (Math.random() * 200);
-            y[i] = (int) (Math.random() * 200);
-        }
-        this.setOval(x, y, N);
-        this.canvas.repaint();
-
-    }
-
-    public void setOval(int[] x, int[] y, int n) {
-        this.n = n;
-        for (int i = 0; i < n; i++) {
-            this.x[i] = x[i];
-            this.y[i] = y[i];
-        }
-    }
-
     public void createAndShowGui() {
-        this.canvas.setSize(300, 200);
-        this.canvas.setBackground(Color.white);
+        this.createGui();
         this.window.setVisible(true);
+        new Thread(this::loop).start();
     }
 
-    public void paint(Graphics g) {
-        var g2d = (Graphics2D) g;
-        g2d.drawPolygon(this.x, this.y, this.n);
+    @SuppressWarnings("BusyWait")
+    @SneakyThrows
+    public void loop() {
+        while (!this.closed) {
+            Thread.sleep(INTERVAL);
+            this.canvas.move();
+        }
+    }
+
+    /**
+     * handle close
+     */
+    private WindowListener onClose() {
+        return new WindowAdapter() {
+            public void windowClosing(WindowEvent windowEvent) {
+                Screensaver.this.closed = true;
+                System.exit(0);
+            }
+        };
+    }
+
+    /**
+     * 屏保画布
+     */
+    class ScreensaverCanvas extends Canvas {
+
+        private static final int RIGHT_DOWN = 1;
+        private static final int RIGHT_UP = 2;
+        private static final int LEFT_DOWN = 3;
+        private static final int LEFT_UP = 4;
+
+        private static final int STEP = 1;
+
+        public ScreensaverCanvas() {
+            this.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            this.setBackground(Color.white);
+        }
+
+        private int x = 0;
+        private int y = 0;
+
+        private int direction = RIGHT_DOWN;
+
+        @Override
+        public void paint(Graphics g) {
+            var g2d = (Graphics2D) g;
+            g2d.drawString("保护", this.x, this.y);
+        }
+
+
+        public void move() {
+            switch (this.direction) {
+                case RIGHT_DOWN -> {
+                    this.x += STEP;
+                    this.y += STEP;
+                }
+                case RIGHT_UP -> {
+                    this.x += STEP;
+                    this.y -= STEP;
+                }
+                case LEFT_DOWN -> {
+                    this.x -= STEP;
+                    this.y += STEP;
+                }
+                case LEFT_UP -> {
+                    this.x -= STEP;
+                    this.y -= STEP;
+                }
+            }
+            this.checkDirection();
+            this.repaint();
+        }
+
+        public void checkDirection() {
+            var window = Screensaver.this.window;
+            int left = 0;
+            int top = 11;                           // 调整，标题栏
+            int right = window.getWidth() - 26;     // 调整，贴图
+            int bottom = window.getHeight() - 22;   // 调整，贴图
+            switch (this.direction) {
+                case RIGHT_DOWN -> {
+                    if (this.x > right && this.y > bottom) {
+                        this.direction = LEFT_UP;
+                        this.x -= STEP * 2;
+                        this.y -= STEP * 2;
+                    } else if (this.x > right) {
+                        this.direction = LEFT_DOWN;
+                        this.x -= STEP * 2;
+                    } else if (this.y > bottom) {
+                        this.direction = RIGHT_UP;
+                        this.y -= STEP * 2;
+                    }
+                }
+                case RIGHT_UP -> {
+                    if (this.x > right && this.y < top) {
+                        this.direction = LEFT_DOWN;
+                        this.x -= STEP * 2;
+                        this.y += STEP * 2;
+                    } else if (this.x > right) {
+                        this.direction = LEFT_UP;
+                        this.x -= STEP * 2;
+                    } else if (this.y < top) {
+                        this.direction = RIGHT_DOWN;
+                        this.y += STEP * 2;
+                    }
+                }
+                case LEFT_DOWN -> {
+                    if (this.x < left && this.y > bottom) {
+                        this.direction = RIGHT_UP;
+                        this.x += STEP * 2;
+                        this.y -= STEP * 2;
+                    } else if (this.x < left) {
+                        this.direction = RIGHT_DOWN;
+                        this.x += STEP * 2;
+                    } else if (this.y > bottom) {
+                        this.direction = LEFT_UP;
+                        this.y -= STEP * 2;
+                    }
+                }
+                case LEFT_UP -> {
+                    if (this.x < left && this.y < top) {
+                        this.direction = RIGHT_DOWN;
+                        this.x += STEP * 2;
+                        this.y += STEP * 2;
+                    } else if (this.x < left) {
+                        this.direction = RIGHT_UP;
+                        this.x += STEP * 2;
+                    } else if (this.y < top) {
+                        this.direction = LEFT_DOWN;
+                        this.y += STEP * 2;
+                    }
+                }
+            }
+        }
     }
 }
