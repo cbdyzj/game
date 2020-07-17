@@ -14,40 +14,25 @@ public class ButtonBox {
 
     private void createGui() {
         // header label
-        var headerLabel = new JLabel("", JLabel.CENTER);
-        this.statusLabel = new JLabel("", JLabel.CENTER);
-        this.statusLabel.setSize(350, 100);
+        var headerLabel = new JLabel("Control in action: Button", JLabel.CENTER);
         // controlPanel
         var controlPanel = new JPanel();
         controlPanel.setLayout(new FlowLayout());
-
+        controlPanel.add(this.createButton("Submit"));
+        controlPanel.add(this.createButton("OK"));
+        controlPanel.add(this.createButton("Cancel"));
+        // status label
+        this.statusLabel = new JLabel("", JLabel.CENTER);
+        this.statusLabel.setSize(350, 100);
         // main frame
         this.window = new JFrame("Java SWING Examples");
-        this.window.setSize(400, 400);
-        this.window.addWindowListener(this.onClose());
-        this.window.setLayout(new GridLayout(3, 1));
-
         this.window.add(headerLabel);
         this.window.add(controlPanel);
         this.window.add(this.statusLabel);
-
-        // okButton
-        var okButton = new JButton("OK");
-        okButton.setActionCommand("OK");
-        okButton.addActionListener(ev -> this.statusLabel.setText("Ok Button clicked."));
-        controlPanel.add(okButton);
-        // submitButton
-        var submitButton = new JButton("Submit");
-        submitButton.setActionCommand("Submit");
-        submitButton.addActionListener(ev -> this.statusLabel.setText("Submit Button clicked."));
-        controlPanel.add(submitButton);
-        // cancelButton
-        var cancelButton = new JButton("Cancel");
-        cancelButton.setActionCommand("Cancel");
-        cancelButton.addActionListener(ev -> this.statusLabel.setText("Cancel Button clicked."));
-        controlPanel.add(cancelButton);
-
-        headerLabel.setText("Control in action: Button");
+        this.window.setLocationRelativeTo(null);
+        this.window.setSize(400, 400);
+        this.window.addWindowListener(this.onClose());
+        this.window.setLayout(new GridLayout(3, 1));
     }
 
     /**
@@ -56,6 +41,13 @@ public class ButtonBox {
     public void createAndShowGui() {
         this.createGui();
         this.window.setVisible(true);
+    }
+
+    private JButton createButton(String name) {
+        var button = new JButton(name);
+        button.setActionCommand(name);
+        button.addActionListener(ev -> this.statusLabel.setText(name + " Button clicked."));
+        return button;
     }
 
     /**

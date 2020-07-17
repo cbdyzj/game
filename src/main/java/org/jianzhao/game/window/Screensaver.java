@@ -2,12 +2,17 @@ package org.jianzhao.game.window;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.ResourceUtils;
+import org.springframework.util.StreamUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.FileInputStream;
+
+import static java.awt.Image.SCALE_SMOOTH;
 
 /**
  * 屏保
@@ -15,10 +20,10 @@ import java.awt.event.WindowListener;
 @Slf4j
 public class Screensaver {
 
-    public static final int DEFAULT_WIDTH = 400;
-    public static final int DEFAULT_HEIGHT = 300;
+    public static final int DEFAULT_WIDTH = 600;
+    public static final int DEFAULT_HEIGHT = 440;
 
-    public static final int INTERVAL = 25;
+    public static final int INTERVAL = 20;
 
     private boolean closed = false;
 
@@ -49,6 +54,13 @@ public class Screensaver {
         }
     }
 
+    @SneakyThrows
+    private static Image getImage(String path) {
+        var imageFile = ResourceUtils.getFile(path);
+        var imageBytes = StreamUtils.copyToByteArray(new FileInputStream(imageFile));
+        return Toolkit.getDefaultToolkit().createImage(imageBytes);
+    }
+
     /**
      * handle close
      */
@@ -73,9 +85,17 @@ public class Screensaver {
 
         private static final int STEP = 1;
 
+        private final Image backgroundImage;
+        private final Image signImage;
+        private static final int SIGN_IMAGE_WIDTH = 80;
+        private static final int SIGN_IMAGE_HEIGHT = 50;
+
         public ScreensaverCanvas() {
             this.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-            this.setBackground(Color.white);
+            var image = getImage("classpath:images/jdb.jpeg");
+            this.signImage = image.getScaledInstance(SIGN_IMAGE_WIDTH, SIGN_IMAGE_HEIGHT, SCALE_SMOOTH);
+            image = getImage("classpath:images/ybsbny.png");
+            this.backgroundImage = image.getScaledInstance(DEFAULT_WIDTH, DEFAULT_HEIGHT, SCALE_SMOOTH);
         }
 
         private int x = 0;
@@ -86,9 +106,9 @@ public class Screensaver {
         @Override
         public void paint(Graphics g) {
             var g2d = (Graphics2D) g;
-            g2d.drawString("保护", this.x, this.y);
+            g2d.drawImage(this.backgroundImage, 0, 0, null);
+            g2d.drawImage(this.signImage, this.x, this.y, null);
         }
-
 
         public void move() {
             switch (this.direction) {
@@ -116,9 +136,11 @@ public class Screensaver {
         public void checkDirection() {
             var window = Screensaver.this.window;
             int left = 0;
-            int top = 11;                           // 调整，标题栏
-            int right = window.getWidth() - 26;     // 调整，贴图
-            int bottom = window.getHeight() - 22;   // 调整，贴图
+            int top = 0;
+            // 调整，贴图，边框
+            int right = window.getWidth() - SIGN_IMAGE_WIDTH - window.getInsets().left;
+            // 调整，贴图，边框
+            int bottom = window.getHeight() - SIGN_IMAGE_HEIGHT - window.getInsets().top;
             switch (this.direction) {
                 case RIGHT_DOWN -> {
                     if (this.x > right && this.y > bottom) {
