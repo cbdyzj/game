@@ -4,7 +4,7 @@ import org.jianzhao.game.window.Screensaver;
 
 public class Game {
 
-    public void createAndShowGui() {
+    public void start() {
         new Screensaver().createAndShowGui();
     }
 }

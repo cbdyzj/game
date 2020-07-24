@@ -4,6 +4,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
+import javax.swing.*;
+
 @SpringBootApplication
 public class Application implements CommandLineRunner {
 
@@ -13,6 +15,6 @@ public class Application implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        new Game().createAndShowGui();
+        SwingUtilities.invokeLater(new Game()::start);
     }
 }

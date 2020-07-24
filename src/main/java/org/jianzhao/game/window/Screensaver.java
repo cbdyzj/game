@@ -42,16 +42,12 @@ public class Screensaver {
     public void createAndShowGui() {
         this.createGui();
         this.window.setVisible(true);
-        new Thread(this::loop).start();
+        this.loop();
     }
 
-    @SuppressWarnings("BusyWait")
-    @SneakyThrows
     public void loop() {
-        while (!this.closed) {
-            Thread.sleep(INTERVAL);
-            this.canvas.move();
-        }
+        var timer = new Timer(INTERVAL, ev -> this.canvas.move());
+        timer.start();
     }
 
     @SneakyThrows
