@@ -2,7 +2,7 @@ package org.jianzhao.game.window;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.ResourceUtils;
+import org.jianzhao.game.Application;
 import org.springframework.util.StreamUtils;
 
 import javax.swing.*;
@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.FileInputStream;
 
 import static java.awt.Image.SCALE_SMOOTH;
 
@@ -47,13 +46,18 @@ public class Screensaver {
 
     public void loop() {
         var timer = new Timer(INTERVAL, ev -> this.canvas.move());
+        timer.addActionListener(ev -> {
+            if (this.closed) {
+                timer.stop();
+            }
+        });
         timer.start();
     }
 
     @SneakyThrows
     private static Image getImage(String path) {
-        var imageFile = ResourceUtils.getFile(path);
-        var imageBytes = StreamUtils.copyToByteArray(new FileInputStream(imageFile));
+        var resource = Application.context().getResource(path);
+        var imageBytes = StreamUtils.copyToByteArray(resource.getInputStream());
         return Toolkit.getDefaultToolkit().createImage(imageBytes);
     }
 
@@ -88,9 +92,9 @@ public class Screensaver {
 
         public ScreensaverCanvas() {
             this.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-            var image = getImage("classpath:images/jdb.jpeg");
+            var image = getImage("classpath:/images/jdb.jpeg");
             this.signImage = image.getScaledInstance(SIGN_IMAGE_WIDTH, SIGN_IMAGE_HEIGHT, SCALE_SMOOTH);
-            image = getImage("classpath:images/ybsbny.png");
+            image = getImage("classpath:/images/ybsbny.png");
             this.backgroundImage = image.getScaledInstance(DEFAULT_WIDTH, DEFAULT_HEIGHT, SCALE_SMOOTH);
         }
 
