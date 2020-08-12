@@ -57,8 +57,11 @@ public class Screensaver {
     @SneakyThrows
     private static Image getImage(String path) {
         var resource = Application.context().getResource(path);
-        var imageBytes = StreamUtils.copyToByteArray(resource.getInputStream());
-        return Toolkit.getDefaultToolkit().createImage(imageBytes);
+        var is = resource.getInputStream();
+        try (is) {
+            var imageBytes = StreamUtils.copyToByteArray(is);
+            return Toolkit.getDefaultToolkit().createImage(imageBytes);
+        }
     }
 
     /**
